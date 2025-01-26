@@ -193,60 +193,68 @@
 
         <script>
             // Lógica para habilitar el botón del modal
-            const checkboxes = document.querySelectorAll("input[name='productos']");
-            const openModalButton = document.getElementById("openModalButton");
+const checkboxes = document.querySelectorAll("input[name='productos']");
+const openModalButton = document.getElementById("openModalButton");
 
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener("change", () => {
-                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-                    openModalButton.disabled = !anyChecked;
-                });
+checkboxes.forEach(checkbox => {
+    checkbox.addEventListener("change", () => {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        openModalButton.disabled = !anyChecked;
+    });
+});
+
+// Lógica para enviar el pedido
+document.getElementById("enviarPedido").addEventListener("click", function () {
+    const categorias = {};
+
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
+            const cantidad = parseInt(cantidadInput.value); // Convertir a número entero
+            const precioUnitario = parseFloat(checkbox.value.split("|")[1]); // Extraer el precio unitario
+            const productoNombre = checkbox.value.split("|")[0]; // Extraer el nombre del producto
+            const categoriaNombre = checkbox.closest(".masonry-item").querySelector("h3").innerText;
+
+            if (!categorias[categoriaNombre]) {
+                categorias[categoriaNombre] = [];
+            }
+            categorias[categoriaNombre].push({
+                producto: productoNombre,
+                cantidad: cantidad,
+                subtotal: precioUnitario * cantidad // Calcular subtotal
             });
+        }
+    });
 
-    // Lógica para enviar el pedido
-            document.getElementById("enviarPedido").addEventListener("click", function () {
-                const productosSeleccionados = [];
-                const cantidades = [];
-                checkboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
-                        const cantidad = cantidadInput.value;
-                        if (cantidad > 0) {
-                            productosSeleccionados.push(checkbox.value);
-                            cantidades.push(cantidad);
-                        }
-                    }
-                });
+    const nombre = document.getElementById("nombre").value;
+    const direccion = document.getElementById("direccion").value;
 
-                const nombre = document.getElementById("nombre").value;
-                const direccion = document.getElementById("direccion").value;
+    if (!nombre || !direccion || Object.keys(categorias).length === 0) {
+        alert("Completa todos los campos.");
+        return;
+    }
 
-                if (!nombre || !direccion || productosSeleccionados.length === 0) {
-                    alert("Completa todos los campos.");
-                    return;
-                }
+    // Genera el mensaje para WhatsApp
+    let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
+    let total = 0; // Inicializa el total
 
-                // Genera el mensaje para WhatsApp
-                let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
-                let total = 0; // Inicializa el total
+    Object.keys(categorias).forEach(categoria => {
+        mensaje += `- ${categoria}:\n`; // Agregar el nombre de la categoría
+        categorias[categoria].forEach(item => {
+            mensaje += `  * ${item.producto}: ${item.cantidad} unidad(es).\n`; // Agregar productos dentro de la categoría
+            total += item.subtotal; // Sumar al total
+        });
+    });
 
-                productosSeleccionados.forEach((producto, index) => {
-                    const [nombreProducto, precio] = producto.split("|");
-                    const cantidad = cantidades[index];
-                    const subtotal = parseFloat(precio) * parseInt(cantidad); // Calcula el subtotal
-                    total += subtotal; // Suma el subtotal al total
-                    mensaje += `- ${nombreProducto}: ${cantidad} unidad(es) a S/ ${precio} cada uno (Subtotal: S/ ${subtotal.toFixed(2)}).\n`;
-                });
+    mensaje += `\nTotal a pagar: S/ ${total.toFixed(2)}.\n\n¡Gracias!`;
 
-                mensaje += `\nTotal: S/ ${total.toFixed(2)}.\n\n¡Gracias!`;
+    // Codifica el mensaje y genera el enlace de WhatsApp
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
 
-                // Codifica el mensaje y genera el enlace de WhatsApp
-                const mensajeCodificado = encodeURIComponent(mensaje);
-                const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
-
-                // Abre WhatsApp
-                window.open(whatsappUrl, "_blank");
-            });
+    // Abre WhatsApp
+    window.open(whatsappUrl, "_blank");
+});
 
         </script>
 
