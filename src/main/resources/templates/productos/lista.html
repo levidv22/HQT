@@ -164,106 +164,154 @@
             </div>
         </div>
 
-        <!-- Modal -->
-        <div class="modal fade" id="pedidoModal" tabindex="-1" aria-labelledby="pedidoModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="pedidoModalLabel">Información del Cliente</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Modal actualizado -->
+<div class="modal fade" id="pedidoModal" tabindex="-1" aria-labelledby="pedidoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pedidoModalLabel">Información del Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pedidoForm">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre:</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ingresa tu nombre" required>
                     </div>
-                    <div class="modal-body">
-                        <form id="pedidoForm">
-                            <div class="mb-3">
-                                <label for="nombre" class="form-label">Nombre:</label>
-                                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ingresa tu nombre" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="direccion" class="form-label">Dirección:</label>
-                                <input type="text" id="direccion" name="direccion" class="form-control" placeholder="Ingresa tu dirección exacta" required>
-                            </div>
-                            <button type="button" class="btn btn-success" id="enviarPedido"><i class="fa-solid fa-bolt"></i> Enviar Pedido</button>
-                        </form>
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">Dirección:</label>
+                        <input type="text" id="direccion" name="direccion" class="form-control" placeholder="Ingresa tu dirección exacta" required>
                     </div>
-                </div>
+                    <div id="jugosExtras" class="mb-3"></div> <!-- Opciones para JUGOS -->
+                    <button type="button" class="btn btn-success" id="enviarPedido"><i class="fa-solid fa-bolt"></i> Enviar Pedido</button>
+                </form>
             </div>
         </div>
+    </div>
+</div>
 
         <footer>
             <p>© 2025 Juguería HQT. Todos los derechos reservados.</p>
         </footer>
 
         <script>
-            // Lógica para habilitar el botón del modal
-            const checkboxes = document.querySelectorAll("input[name='productos']");
-            const openModalButton = document.getElementById("openModalButton");
+    // Variables y lógica general
+    const checkboxes = document.querySelectorAll("input[name='productos']");
+    const openModalButton = document.getElementById("openModalButton");
+    const jugosExtrasContainer = document.getElementById("jugosExtras");
+    const JUGOS_CATEGORIA = "JUGOS"; // Nombre de la categoría "JUGOS"
 
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener("change", () => {
-                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-                    openModalButton.disabled = !anyChecked;
-                });
+    // Habilitar botón del modal si se selecciona algún producto
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", () => {
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            openModalButton.disabled = !anyChecked;
+        });
+    });
+
+    // Mostrar opciones adicionales al abrir el modal
+    openModalButton.addEventListener("click", () => {
+        jugosExtrasContainer.innerHTML = ""; // Limpiar opciones previas
+        const jugosSeleccionados = Array.from(checkboxes)
+            .filter(cb => cb.checked && cb.closest(".masonry-item").querySelector("h3").innerText === JUGOS_CATEGORIA);
+
+        if (jugosSeleccionados.length > 0) {
+            jugosExtrasContainer.innerHTML = "<h5>Opciones para Jugos:</h5>";
+            jugosSeleccionados.forEach((jugo, index) => {
+                const productoNombre = jugo.value.split("|")[0];
+                jugosExtrasContainer.innerHTML += `
+                    <div class="mb-3">
+                        <label>${productoNombre}:</label>
+                        <div>
+                            <label><input type="checkbox" name="opcion_${index}" value="hielo"> Con Hielo</label>
+                            <label class="ms-2"><input type="checkbox" name="opcion_${index}" value="azucar"> Con Azúcar</label>
+                            <label class="ms-2"><input type="checkbox" name="opcion_${index}" value="leche"> Con Leche (+S/ 2)</label>
+                        </div>
+                    </div>
+                `;
             });
+        }
+    });
 
-            // Lógica para enviar el pedido
-            document.getElementById("enviarPedido").addEventListener("click", function () {
-                const categorias = {};
+    // Enviar pedido y generar mensaje de WhatsApp
+    document.getElementById("enviarPedido").addEventListener("click", () => {
+        const categorias = {};
+        let total = 0;
 
-                checkboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
-                        const cantidad = parseInt(cantidadInput.value); // Convertir a número entero
-                        const precioUnitario = parseFloat(checkbox.value.split("|")[1]); // Extraer el precio unitario
-                        const productoNombre = checkbox.value.split("|")[0]; // Extraer el nombre del producto
-                        const categoriaNombre = checkbox.closest(".masonry-item").querySelector("h3").innerText;
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
+                const cantidad = parseInt(cantidadInput.value);
+                const precioUnitario = parseFloat(checkbox.value.split("|")[1]);
+                const productoNombre = checkbox.value.split("|")[0];
+                const categoriaNombre = checkbox.closest(".masonry-item").querySelector("h3").innerText;
 
-                        if (!categorias[categoriaNombre]) {
-                            categorias[categoriaNombre] = [];
-                        }
-                        categorias[categoriaNombre].push({
-                            producto: productoNombre,
-                            cantidad: cantidad,
-                            subtotal: precioUnitario * cantidad // Calcular subtotal
-                        });
-                    }
-                });
-
-                const nombre = document.getElementById("nombre").value;
-                const direccion = document.getElementById("direccion").value;
-
-                if (!nombre || !direccion || Object.keys(categorias).length === 0) {
-                    alert("Completa todos los campos.");
-                    return;
+                if (!categorias[categoriaNombre]) {
+                    categorias[categoriaNombre] = [];
                 }
-
-                // Genera el mensaje para WhatsApp
-                let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
-                let total = 0; // Inicializa el total
-
-                Object.keys(categorias).forEach((categoria, index) => {
-                    if (index > 0) {
-                        // Agregar una línea en blanco antes de cada categoría excepto la primera
-                        mensaje += `\n`;
-                    }
-                    mensaje += `- ${categoria}:\n`; // Agregar el nombre de la categoría
-                    categorias[categoria].forEach(item => {
-                        mensaje += `  * (0${item.cantidad}) ${item.producto}.\n`; // Agregar productos dentro de la categoría
-                        total += item.subtotal; // Sumar al total
-                    });
+                categorias[categoriaNombre].push({
+                    producto: productoNombre,
+                    cantidad: cantidad,
+                    subtotal: precioUnitario * cantidad
                 });
+            }
+        });
 
-                mensaje += `\nTotal a pagar: S/ ${total.toFixed(2)}.\n\n¡Gracias!`;
+        // Opciones para JUGOS
+        const jugosSeleccionados = Array.from(checkboxes)
+            .filter(cb => cb.checked && cb.closest(".masonry-item").querySelector("h3").innerText === JUGOS_CATEGORIA);
 
+        jugosSeleccionados.forEach((jugo, index) => {
+            const opciones = Array.from(document.getElementsByName(`opcion_${index}`));
+            const productoNombre = jugo.value.split("|")[0];
 
-                // Codifica el mensaje y genera el enlace de WhatsApp
-                const mensajeCodificado = encodeURIComponent(mensaje);
-                const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
+            let conHielo = "sin hielo";
+            let conAzucar = "sin azúcar";
+            let conLeche = "sin leche";
 
-                // Abre WhatsApp
-                window.open(whatsappUrl, "_blank");
+            opciones.forEach(opcion => {
+                if (opcion.checked) {
+                    if (opcion.value === "hielo") conHielo = "con hielo";
+                    if (opcion.value === "azucar") conAzucar = "con azúcar";
+                    if (opcion.value === "leche") {
+                        conLeche = "con leche";
+                        total += 2 * parseInt(jugo.closest("li").querySelector("input[name='cantidad']").value); // Sumar S/ 2 por cada cantidad
+                    }
+                }
             });
 
-        </script>
+            categorias[JUGOS_CATEGORIA].find(item => item.producto === productoNombre).opciones = `${conHielo}, ${conAzucar}, ${conLeche}`;
+        });
+
+        const nombre = document.getElementById("nombre").value;
+        const direccion = document.getElementById("direccion").value;
+
+        if (!nombre || !direccion || Object.keys(categorias).length === 0) {
+            alert("Completa todos los campos.");
+            return;
+        }
+
+        // Genera mensaje de WhatsApp
+        let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
+        Object.keys(categorias).forEach((categoria, index) => {
+            if (index > 0) mensaje += `\n`;
+            mensaje += `- ${categoria}:\n`;
+            categorias[categoria].forEach(item => {
+                mensaje += `  * (0${item.cantidad}) ${item.producto}`;
+                if (item.opciones) mensaje += ` (${item.opciones})`;
+                mensaje += `.\n`;
+                total += item.subtotal;
+            });
+        });
+
+        mensaje += `\nTotal a pagar: S/ ${total.toFixed(2)}.\n\n¡Gracias!`;
+
+        // Codifica mensaje y abre WhatsApp
+        const mensajeCodificado = encodeURIComponent(mensaje);
+        const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
+        window.open(whatsappUrl, "_blank");
+    });
+</script>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
