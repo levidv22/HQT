@@ -149,169 +149,233 @@
                             <li th:each="product : ${products}" th:if="${product.categoria.id} == ${category.id}" class="d-flex flex-column border-bottom py-2">
                                 <!-- Detalles del producto -->
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <label>
+                                    <label class="flex-grow-1">
                                         <input type="checkbox" name="productos" 
                                                th:value="${product.nombre} + '|' + ${product.precio}" />
                                         <span th:text="${product.nombre}"></span>
                                     </label>
-                                    <input type="number" name="cantidad" min="1" value="1" class="form-control w-25 ms-3" />
+                                    <!-- Controles de cantidad con botones de más y menos -->
+                                    <div class="d-flex align-items-center">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quantity-btn decrement" style="min-width: 32px; height: 32px;">-</button>
+                                        <input type="number" name="cantidad" min="1" value="1" 
+                                               class="form-control text-center mx-1" 
+                                               style="width: 50px; height: 32px;" readonly />
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quantity-btn increment" style="min-width: 32px; height: 32px;">+</button>
+                                    </div>
                                 </div>
                                 <span class="text-muted" th:text="'S/ ' + ${product.precio}"></span>
                             </li>
                         </ul>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <!-- Modal actualizado -->
-<div class="modal fade" id="pedidoModal" tabindex="-1" aria-labelledby="pedidoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="pedidoModalLabel">Información del Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="pedidoForm">
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre:</label>
-                        <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ingresa tu nombre" required>
+        <!-- Modal actualizado con mejor diseño -->
+        <div class="modal fade" id="pedidoModal" tabindex="-1" aria-labelledby="pedidoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="pedidoModalLabel">
+                            <i class="fa-solid fa-cart-shopping me-2"></i> Información del Pedido
+                        </h5>
+                        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="mb-3">
-                        <label for="direccion" class="form-label">Dirección:</label>
-                        <input type="text" id="direccion" name="direccion" class="form-control" placeholder="Ingresa tu dirección exacta" required>
+                    <div class="modal-body">
+                        <form id="pedidoForm">
+                            <!-- Información del cliente -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="nombre" class="form-label">Nombre:</label>
+                                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ingresa tu nombre" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="direccion" class="form-label">Dirección:</label>
+                                    <input type="text" id="direccion" name="direccion" class="form-control" placeholder="Ingresa tu dirección exacta" required>
+                                </div>
+                            </div>
+                            <!-- Opciones adicionales para Jugos -->
+                            <div id="jugosExtras" class="mb-4"></div>
+                            <!-- Opciones adicionales para Jugos Especiales -->
+                            <div id="jugosEspecialesExtras" class="mb-4"></div>
+                            <!-- Botón para enviar -->
+                            <div class="text-end">
+                                <button type="button" class="btn btn-success" id="enviarPedido">
+                                    <i class="fa-solid fa-bolt me-2"></i> Enviar Pedido
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div id="jugosExtras" class="mb-3"></div> <!-- Opciones para JUGOS -->
-                    <button type="button" class="btn btn-success" id="enviarPedido"><i class="fa-solid fa-bolt"></i> Enviar Pedido</button>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+
 
         <footer>
             <p>© 2025 Juguería HQT. Todos los derechos reservados.</p>
         </footer>
 
         <script>
-    // Variables y lógica general
-    const checkboxes = document.querySelectorAll("input[name='productos']");
-    const openModalButton = document.getElementById("openModalButton");
-    const jugosExtrasContainer = document.getElementById("jugosExtras");
-    const JUGOS_CATEGORIA = "JUGOS"; // Nombre de la categoría "JUGOS"
+            // Bloquear clic derecho
+            // document.addEventListener("contextmenu", function (e) {
+            //    e.preventDefault();
+            //});
 
-    // Habilitar botón del modal si se selecciona algún producto
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener("change", () => {
-            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-            openModalButton.disabled = !anyChecked;
-        });
-    });
+            // Variables globales
+            const checkboxes = document.querySelectorAll("input[name='productos']");
+            const openModalButton = document.getElementById("openModalButton");
+            const jugosExtrasContainer = document.getElementById("jugosExtras");
+            const jugosEspecialesExtrasContainer = document.getElementById("jugosEspecialesExtras");
+            const JUGOS_CATEGORIA = "JUGOS";
+            const JUGOS_ESPECIALES_CATEGORIA = "JUGOS ESPECIALES";
 
-    // Mostrar opciones adicionales al abrir el modal
-    openModalButton.addEventListener("click", () => {
-        jugosExtrasContainer.innerHTML = ""; // Limpiar opciones previas
-        const jugosSeleccionados = Array.from(checkboxes)
-            .filter(cb => cb.checked && cb.closest(".masonry-item").querySelector("h3").innerText === JUGOS_CATEGORIA);
-
-        if (jugosSeleccionados.length > 0) {
-            jugosExtrasContainer.innerHTML = "<h5>Opciones para Jugos:</h5>";
-            jugosSeleccionados.forEach((jugo, index) => {
-                const productoNombre = jugo.value.split("|")[0];
-                jugosExtrasContainer.innerHTML += `
-                    <div class="mb-3">
-                        <label>${productoNombre}:</label>
-                        <div>
-                            <label><input type="checkbox" name="opcion_${index}" value="hielo"> Con Hielo</label>
-                            <label class="ms-2"><input type="checkbox" name="opcion_${index}" value="azucar"> Con Azúcar</label>
-                            <label class="ms-2"><input type="checkbox" name="opcion_${index}" value="leche"> Con Leche (+S/ 2)</label>
-                        </div>
-                    </div>
-                `;
+            // Habilitar botón de modal si hay algún producto seleccionado
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener("change", () => {
+                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                    openModalButton.disabled = !anyChecked;
+                });
             });
-        }
-    });
 
-    // Enviar pedido y generar mensaje de WhatsApp
-    document.getElementById("enviarPedido").addEventListener("click", () => {
-        const categorias = {};
-        let total = 0;
+            // Manejo de botones de incrementar/decrementar cantidad
+            document.querySelectorAll(".quantity-btn").forEach(button => {
+                button.addEventListener("click", (e) => {
+                    const input = e.target.closest("div").querySelector("input[name='cantidad']");
+                    let cantidad = parseInt(input.value);
 
-        checkboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
-                const cantidad = parseInt(cantidadInput.value);
-                const precioUnitario = parseFloat(checkbox.value.split("|")[1]);
-                const productoNombre = checkbox.value.split("|")[0];
-                const categoriaNombre = checkbox.closest(".masonry-item").querySelector("h3").innerText;
+                    if (e.target.classList.contains("increment")) {
+                        cantidad++;
+                    } else if (e.target.classList.contains("decrement") && cantidad > 1) {
+                        cantidad--;
+                    }
 
-                if (!categorias[categoriaNombre]) {
-                    categorias[categoriaNombre] = [];
+                    input.value = cantidad;
+                });
+            });
+
+            // Mostrar opciones adicionales al abrir el modal
+            openModalButton.addEventListener("click", () => {
+                // Limpiar opciones previas
+                jugosExtrasContainer.innerHTML = "";
+                jugosEspecialesExtrasContainer.innerHTML = "";
+
+                // Opciones para JUGOS
+                handleAdditionalOptions(jugosExtrasContainer, JUGOS_CATEGORIA);
+
+                // Opciones para JUGOS ESPECIALES
+                handleAdditionalOptions(jugosEspecialesExtrasContainer, JUGOS_ESPECIALES_CATEGORIA);
+            });
+
+            // Función para generar opciones adicionales
+            function handleAdditionalOptions(container, categoria) {
+                const productosSeleccionados = Array.from(checkboxes).filter(cb => cb.checked &&
+                            cb.closest(".masonry-item").querySelector("h3").innerText === categoria);
+
+                if (productosSeleccionados.length > 0) {
+                    container.innerHTML = `<h5>Opciones para ${categoria}:</h5>`;
+                    productosSeleccionados.forEach((producto, index) => {
+                        const productoNombre = producto.value.split("|")[0];
+                        container.innerHTML += `
+                <div class="mb-3">
+                    <label>${productoNombre}:</label>
+                    <div>
+                        <label><input type="checkbox" name="opcion_${categoria}_${index}" value="hielo"> Con Hielo</label>
+                        <label class="ms-2"><input type="checkbox" name="opcion_${categoria}_${index}" value="azucar"> Con Azúcar</label>
+                        <label class="ms-2"><input type="checkbox" name="opcion_${categoria}_${index}" value="leche"> Con Leche</label>
+                    </div>
+                </div>
+            `;
+                    });
                 }
-                categorias[categoriaNombre].push({
-                    producto: productoNombre,
-                    cantidad: cantidad,
-                    subtotal: precioUnitario * cantidad
+            }
+
+// Enviar pedido y generar mensaje de WhatsApp
+            document.getElementById("enviarPedido").addEventListener("click", () => {
+                const categorias = {};
+
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        const cantidadInput = checkbox.closest("li").querySelector("input[name='cantidad']");
+                        const cantidad = parseInt(cantidadInput.value);
+                        const precioUnitario = parseFloat(checkbox.value.split("|")[1]);
+                        const productoNombre = checkbox.value.split("|")[0];
+                        const categoriaNombre = checkbox.closest(".masonry-item").querySelector("h3").innerText;
+
+                        if (!categorias[categoriaNombre]) {
+                            categorias[categoriaNombre] = [];
+                        }
+                        categorias[categoriaNombre].push({
+                            producto: productoNombre,
+                            cantidad: cantidad,
+                        });
+                    }
+                });
+
+                // Procesar opciones adicionales para JUGOS y JUGOS ESPECIALES
+                handleAdditionalChoices(JUGOS_CATEGORIA, categorias);
+                handleAdditionalChoices(JUGOS_ESPECIALES_CATEGORIA, categorias);
+
+                const nombre = document.getElementById("nombre").value;
+                const direccion = document.getElementById("direccion").value;
+
+                if (!nombre || !direccion || Object.keys(categorias).length === 0) {
+                    alert("Completa todos los campos.");
+                    return;
+                }
+
+                // Generar mensaje de WhatsApp
+                let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
+                Object.keys(categorias).forEach((categoria, index) => {
+                    if (index > 0)
+                        mensaje += `\n`;
+                    mensaje += `- ${categoria}:\n`;
+                    categorias[categoria].forEach(item => {
+                        mensaje += `  * (0${item.cantidad}) ${item.producto}`;
+                        if (item.opciones)
+                            mensaje += ` (${item.opciones})`;
+                        mensaje += `.\n`;
+                    });
+                });
+
+                mensaje += `\n¡Gracias!`;
+
+                // Codificar mensaje y abrir WhatsApp
+                const mensajeCodificado = encodeURIComponent(mensaje);
+                const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
+                window.open(whatsappUrl, "_blank");
+            });
+
+            // Función para procesar opciones adicionales
+            function handleAdditionalChoices(categoria, categorias) {
+                const productosSeleccionados = Array.from(checkboxes).filter(cb =>
+                    cb.checked && cb.closest(".masonry-item").querySelector("h3").innerText === categoria);
+
+                productosSeleccionados.forEach((producto, index) => {
+                    const opciones = Array.from(document.getElementsByName(`opcion_${categoria}_${index}`));
+                    const productoNombre = producto.value.split("|")[0];
+
+                    let conHielo = "sin hielo";
+                    let conAzucar = "sin azúcar";
+                    let conLeche = "sin leche";
+
+                    opciones.forEach(opcion => {
+                        if (opcion.checked) {
+                            if (opcion.value === "hielo")
+                                conHielo = "con hielo";
+                            if (opcion.value === "azucar")
+                                conAzucar = "con azúcar";
+                            if (opcion.value === "leche")
+                                conLeche = "con leche";
+                        }
+                    });
+
+                    categorias[categoria].find(item => item.producto === productoNombre).opciones = `${conHielo}, ${conAzucar}, ${conLeche}`;
                 });
             }
-        });
 
-        // Opciones para JUGOS
-        const jugosSeleccionados = Array.from(checkboxes)
-            .filter(cb => cb.checked && cb.closest(".masonry-item").querySelector("h3").innerText === JUGOS_CATEGORIA);
+        </script>
 
-        jugosSeleccionados.forEach((jugo, index) => {
-            const opciones = Array.from(document.getElementsByName(`opcion_${index}`));
-            const productoNombre = jugo.value.split("|")[0];
-
-            let conHielo = "sin hielo";
-            let conAzucar = "sin azúcar";
-            let conLeche = "sin leche";
-
-            opciones.forEach(opcion => {
-                if (opcion.checked) {
-                    if (opcion.value === "hielo") conHielo = "con hielo";
-                    if (opcion.value === "azucar") conAzucar = "con azúcar";
-                    if (opcion.value === "leche") {
-                        conLeche = "con leche";
-                        total += 2 * parseInt(jugo.closest("li").querySelector("input[name='cantidad']").value); // Sumar S/ 2 por cada cantidad
-                    }
-                }
-            });
-
-            categorias[JUGOS_CATEGORIA].find(item => item.producto === productoNombre).opciones = `${conHielo}, ${conAzucar}, ${conLeche}`;
-        });
-
-        const nombre = document.getElementById("nombre").value;
-        const direccion = document.getElementById("direccion").value;
-
-        if (!nombre || !direccion || Object.keys(categorias).length === 0) {
-            alert("Completa todos los campos.");
-            return;
-        }
-
-        // Genera mensaje de WhatsApp
-        let mensaje = `Hola, soy ${nombre}. Mi dirección es: ${direccion}.\n\nDetalles de mi pedido:\n`;
-        Object.keys(categorias).forEach((categoria, index) => {
-            if (index > 0) mensaje += `\n`;
-            mensaje += `- ${categoria}:\n`;
-            categorias[categoria].forEach(item => {
-                mensaje += `  * (0${item.cantidad}) ${item.producto}`;
-                if (item.opciones) mensaje += ` (${item.opciones})`;
-                mensaje += `.\n`;
-                total += item.subtotal;
-            });
-        });
-
-        mensaje += `\nTotal a pagar: S/ ${total.toFixed(2)}.\n\n¡Gracias!`;
-
-        // Codifica mensaje y abre WhatsApp
-        const mensajeCodificado = encodeURIComponent(mensaje);
-        const whatsappUrl = `https://wa.me/51965088603?text=${mensajeCodificado}`;
-        window.open(whatsappUrl, "_blank");
-    });
-</script>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
