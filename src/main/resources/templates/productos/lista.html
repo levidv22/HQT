@@ -36,6 +36,27 @@
                 font-weight: bold;
             }
 
+            .list-style-none {
+                list-style-type: none; /* Elimina los puntos de las listas */
+                padding: 0; /* Elimina el padding de los elementos */
+                margin: 0; /* Elimina el margen de los elementos */
+            }
+
+            .text-center {
+                text-align: center; /* Centra el texto horizontalmente */
+            }
+
+            .additional-info li {
+                font-size: 1rem; /* Tamaño de texto adecuado */
+                font-weight: 500; /* Peso moderado del texto */
+                margin: 10px 0; /* Espaciado entre líneas */
+                color: #444; /* Color del texto */
+                background-color: #d1ee13; /* Fondo suave */
+                padding: 8px 12px; /* Espaciado interno */
+                border-radius: 8px; /* Bordes redondeados */
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
+            }
+
             .masonry {
                 column-count: 2;
                 column-gap: 1rem;
@@ -140,6 +161,12 @@
                 <button id="openModalButton" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#pedidoModal" disabled>
                     <i class="fa-solid fa-bolt"></i> Hacer Pedido
                 </button>
+
+                <div>
+                    <ul class="list-style-none text-center additional-info">
+                        <li>2 soles más adicional con leche</li>
+                    </ul>
+                </div>
 
                 <!-- Listado de productos -->
                 <div>
@@ -290,7 +317,7 @@
                 }
             }
 
-// Enviar pedido y generar mensaje de WhatsApp
+            // Enviar pedido y generar mensaje de WhatsApp
             document.getElementById("enviarPedido").addEventListener("click", () => {
                 const categorias = {};
 
